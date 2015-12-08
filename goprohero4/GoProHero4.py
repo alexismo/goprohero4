@@ -3,6 +3,7 @@
 # GoProHero.py
 # Josh Villbrandt <josh@javconcepts.com>, Blair Gagnon <blairgagnon@gmail.com>
 # August 2013 - November 2014
+# Modified by Alexis Morin <mail@alexismorin.com>
 
 import logging
 import socket
@@ -25,7 +26,7 @@ except ImportError:
     pass
 
 
-class GoProHero:
+class GoProHero4:
     @classmethod
     def config(self):
         return {
