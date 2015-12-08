@@ -11,10 +11,10 @@ import unicodedata
 from colorama import Fore
 
 # urllib support for Python 2 and Python 3
-try:
-    from urllib.request import urlopen, HTTPError, URLError
-except ImportError:
-    from urllib2 import urlopen, HTTPError, URLError
+# try:
+#     from urllib.request import urlopen, HTTPError, URLError
+# except ImportError:
+import urllib3
 
 # attempt imports for image() function
 try:
@@ -31,7 +31,7 @@ class GoProHero4:
     def config(self):
         return {
             'status': GoProHero.statusMatrix,
-            'command': GoProHero.commandMaxtrix
+            'command': GoProHero.commandMatrix
         }
 
     @classmethod
@@ -85,21 +85,25 @@ class GoProHero4:
         else:
             return None
 
-    def _statusURL(self, command):
-        return 'http://{}/{}?t={}'.format(self._ip, command, self._password)
+    def _statusURL(self):
+        return 'http://{}/camera/se'.format(self._ip)
 
     def _commandURL(self, command, value):
-        if value is not None:
-            return 'http://{}/{}?t={}&p=%{}'.format(
-                self._ip, command, self._password, value)
-        else:
-            return 'http://{}/{}?t={}'.format(
-                self._ip, command, self._password)
+        #print command
+        commandURI = self.commandMatrix[command]
+        options = self.commandMatrix[command]['translate']
+        cmd = self.commandMatrix[command]['cmd']
+        for key in options:
+            if (value == options[key]):
+                value = key
+
+        #print options
+        return 'http://{}/gp/gpControl/{}{}'.format(
+            self._ip, cmd, value)
 
     def _previewURL(self):
         return 'http://{}:8080/live/amba.m3u8'.format(self._ip)
 
-    timeout = 2.0
     statusMatrix = {
         'bacpac/se': {
             'power': {
@@ -356,137 +360,47 @@ class GoProHero4:
             }
         }
     }
-    commandMaxtrix = {
-        'power': {
-            'cmd': 'bacpac/PW',
-            'translate': {
-                'sleep': '00',
-                'on': '01'
+
+    statusMatrix = {
+        0: {}, #unknown
+        1: { 'current_mode':{
+                0 : 'video',
+                1 : 'photo',
+                2 : 'multishot',
+                3 : 'timelapse',
+                4 : 'nightlapse',
+                7 : 'settings'
             }
         },
-        'record': {
-            'cmd': 'camera/SH',
-            'translate': {
-                'off': '00',
-                'on': '01'
+        2:{}, # unknown
+        3:{'startup_mode':{
+                0: 'video',
+                1: 'photo',
+                2: 'burst',
+                3: 'timelapse'
             }
         },
-        'preview': {
-            'cmd': 'camera/PV',
-            'translate': {
-                'off': '00',
-                'on': '02'
+        4: {'spot_meter': {
+                0: 'off',
+                1: 'on'
             }
         },
-        'orientation': {
-            'cmd': 'camera/UP',
-            'translate': {
-                'up': '00',
-                'down': '01'
-            }
-        },
-        'mode': {
-            'cmd': 'camera/CM',
-            'translate': {
-                'video': '00',
-                'still': '01',
-                'burst': '02',
-                'timelapse': '03',
-                'timer': '04',
-                'hdmiout': '05'
-            }
-        },
-        'volume': {
-            'cmd': 'camera/BS',
-            'translate': {
-                '0': '00',
-                '70': '01',
-                '100': '02'
-            }
-        },
-        'locate': {
-            'cmd': 'camera/LL',
-            'translate': {
-                'off': '00',
-                'on': '01'
-            }
-        },
-        'picres': {
-            'cmd': 'camera/PR',
-            'translate': {
-                '11MP wide': '00',
-                '8MP med': '01',
-                '5MP wide': '02',
-                '5MP med': '03',
-                '7MP wide': '04',
-                '12MP wide': '05',
-                '7MP med': '06'
-            }
-        },
-        'vidres': {
-            'cmd': 'camera/VV',
-            'translate': {
-                'WVGA': '00',
-                '720p': '01',
-                '960p': '02',
-                '1080p': '03',
-                '1440p': '04',
-                '2.7K': '05',
-                '2.7K 17:9 Cinema': '06',
-                '4K': '07',
-                '4K 17:9 Cinema': '08',
-                '1080p SuperView': '09',
-                '720p SuperView': '0a'
-            }
-        },
-        'fov': {
-            'cmd': 'camera/FV',
-            'translate': {
-                '170': '00',
-                '127': '01',
-                '90': '02'
-            }
-        },
-        'fps': {
-            'cmd': 'camera/FS',
-            'translate': {
-                '12': '00',
-                '12.5': '0b',
-                '15': '01',
-                '24': '02',
-                '25': '03',
-                '30': '04',
-                '48': '05',
-                '50': '06',
-                '60': '07',
-                '100': '08',
-                '120': '09',
-                '240': '0a'
-            }
-        },
-        'looping': {
-            'cmd': 'camera/LO',
-            'translate': {
-                'off': '00',
-                '5 minutes': '01',
-                '20 minutes': '02',
-                '60 minutes': '03',
-                '120 minutes': '04',
-                'max': '05'
-            }
-        },
-        'protune': {
-            'cmd': 'camera/PT',
-            'translate': {
-                'off': '00',
-                'on': '01'
-            }
-        },
-        'delete_last': {
-            'cmd': 'camera/DL'
-        },
-        'delete_all': {
-            'cmd': 'camera/DA'
+        5: {'curr_timelapse_interval': 'variable'},
+        6: {'auto_power_off':{
+            0: 'never',
+            1: '60sec',
+            2: '120sec',
+            3: '300sec'
+        }}
+    }
+
+    commandMatrix = {
+        'mode':{
+        'cmd' : 'command/mode?p=',
+        'translate':{
+            0 : 'video',
+            1 : 'photo',
+            2 : 'multishot'}
         }
     }
 
@@ -506,55 +420,76 @@ class GoProHero4:
             self._password = password
 
     def status(self):
+        timeout = 2.0
+
         status = {
             # summary = 'notfound', 'sleeping', 'on', or 'recording'
             'summary': 'notfound',
-            'raw': {}
+            'raw': {},
+            'state':{}
         }
         camActive = True
 
-        # loop through different status URLs
-        for cmd in self.statusMatrix:
+        #get and store the 31 bytes of status
+        statusUrl = self._statusURL()
 
-            # stop sending requests if a previous request failed
-            if camActive:
-                url = self._statusURL(cmd)
+        http = urllib3.PoolManager()
 
-                # attempt to contact the camera
-                try:
-                    response = urlopen(
-                        url, timeout=self.timeout).read().encode('hex')
-                    status['raw'][cmd] = response  # save raw response
+        r = http.request('GET', statusUrl)
 
-                    # loop through different parts we know how to translate
-                    for item in self.statusMatrix[cmd]:
-                        args = self.statusMatrix[cmd][item]
-                        if 'a' in args and 'b' in args:
-                            part = response[args['a']:args['b']]
-                        else:
-                            part = response
+        if r.status == 200:
+            cameraState = list(r.data.encode('hex'))
+            cameraStateBytes = []
 
-                        # translate the response value if we know how
-                        if 'translate' in args:
-                            status[item] = self._translate(
-                                args['translate'], part)
-                        else:
-                            status[item] = part
-                except (HTTPError, URLError, socket.timeout) as e:
-                    logging.warning('{}{} - error opening {}: {}{}'.format(
-                        Fore.YELLOW, 'GoProHero.status()', url, e, Fore.RESET))
-                    camActive = False
+            for index in range(len(cameraState)):
+                if index % 2 == 0:
+                    cameraStateBytes.append(cameraState[index] + "" + cameraState[index+1])
+                    index += 1
 
-        # build summary
-        if 'record' in status and status['record'] == 'on':
-            status['summary'] = 'recording'
-        elif 'power' in status and status['power'] == 'on':
-            status['summary'] = 'on'
-        elif 'power' in status and status['power'] == 'sleeping':
-            status['summary'] = 'sleeping'
+            status["raw"] = cameraStateBytes
 
-        logging.info('GoProHero.status() - result {}'.format(status))
+            for item in self.statusMatrix:
+                 if (self.statusMatrix[int(item)] != {}): #some bytes are unknown
+                    #item
+                    singleStateDictionary = self.statusMatrix[int(item)]
+                    for key in singleStateDictionary:
+                        try:
+                            if (singleStateDictionary[key] != 'variable'):
+                                status["state"][key] = singleStateDictionary[key][int(status["raw"][item])]
+                            else:
+                                status["state"][key] = status["raw"][item]
+                        except KeyError as e:
+                            print str(e) + " not defined in " + key
+
         return status
+
+        #status['raw'] = response  # save raw response
+
+        # loop through different parts we know how to translate
+
+        #     print status["raw"][int(item)]
+        #     args = self.statusMatrix[cmd][item]
+        #     if 'a' in args and 'b' in args:
+        #         part = response[args['a']:args['b']]
+        #     else:
+        #         part = response
+        #
+        #     # translate the response value if we know how
+        #     if 'translate' in args:
+        #         status[item] = self._translate(
+        #             args['translate'], part)
+        #     else:
+        #         status[item] = part
+
+        # # build summary
+        # if 'record' in status and status['record'] == 'on':
+        #     status['summary'] = 'recording'
+        # elif 'power' in status and status['power'] == 'on':
+        #     status['summary'] = 'on'
+        # elif 'power' in status and status['power'] == 'sleeping':
+        #     status['summary'] = 'sleeping'
+        #
+        # logging.info('GoProHero.status() - result {}'.format(status))
 
     def image(self):
         try:
@@ -584,27 +519,37 @@ class GoProHero4:
         return False
 
     def command(self, command, value=None):
-        func_str = 'GoProHero.command({}, {})'.format(command, value)
+        http = urllib3.PoolManager()
 
-        if command in self.commandMaxtrix:
-            args = self.commandMaxtrix[command]
-            # accept both None and '' for commands without a value
-            if value == '':
-                value = None
-            # for commands with values, translate the value
-            if value is not None and value in args['translate']:
-                value = args['translate'][value]
-            # build the final url
-            url = self._commandURL(args['cmd'], value)
+        commandUrl = self._commandURL(command, value)
 
-            # attempt to contact the camera
-            try:
-                urlopen(url, timeout=self.timeout).read()
-                logging.info('{} - http success!'.format(func_str))
-                return True
-            except (HTTPError, URLError, socket.timeout) as e:
-                logging.warning('{}{} - error opening {}: {}{}'.format(
-                    Fore.YELLOW, func_str, url, e, Fore.RESET))
+        r = http.request('GET', commandUrl)
+        if (r.status == 200):
+            print "super cool. we got this"
+        else:
+            print "dammit"
+
+        # func_str = 'GoProHero.command({}, {})'.format(command, value)
+        #
+        # if command in self.commandMaxtrix:
+        #     args = self.commandMaxtrix[command]
+        #     # accept both None and '' for commands without a value
+        #     if value == '':
+        #         value = None
+        #     # for commands with values, translate the value
+        #     if value is not None and value in args['translate']:
+        #         value = args['translate'][value]
+        #     # build the final url
+        #     url = self._commandURL(args['cmd'], value)
+        #
+        #     # attempt to contact the camera
+        #     try:
+        #         urlopen(url, timeout=self.timeout).read()
+        #         logging.info('{} - http success!'.format(func_str))
+        #         return True
+        #     except (HTTPError, URLError, socket.timeout) as e:
+        #         logging.warning('{}{} - error opening {}: {}{}'.format(
+        #             Fore.YELLOW, func_str, url, e, Fore.RESET))
 
         # catchall return statement
         return False
