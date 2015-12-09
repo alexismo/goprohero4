@@ -88,6 +88,9 @@ class GoProHero4:
     def _statusURL(self):
         return 'http://{}/camera/se'.format(self._ip)
 
+    def _originalStatusURL(self, command):
+        return 'http://{}/{}?t={}'.format(self._ip, command, 'imagination')
+
     def _commandURL(self, command, value):
         #print command
         commandURI = self.commandMatrix[command]
@@ -110,7 +113,7 @@ class GoProHero4:
     def _previewURL(self):
         return 'http://{}:8080/live/amba.m3u8'.format(self._ip)
 
-    statusMatrix = {
+    originalStatusMatrix = {
         'bacpac/se': {
             'power': {
                 'a': 18,
@@ -478,6 +481,55 @@ class GoProHero4:
         else:
             self._password = password
 
+    def originalStatus(self):
+        status = {
+            # summary = 'notfound', 'sleeping', 'on', or 'recording'
+            'summary': 'notfound',
+            'raw': {}
+        }
+        camActive = True
+
+        http = urllib3.PoolManager()
+
+        # loop through different status URLs
+        for cmd in self.originalStatusMatrix:
+
+            # stop sending requests if a previous request failed
+            if camActive:
+                url = self._originalStatusURL(cmd)
+
+                # attempt to contact the camera
+                r = http.request('GET', url)
+                response = r.data.encode('hex')
+                status['raw'][cmd] = response  # save raw response
+
+                # loop through different parts we know how to translate
+                for item in self.originalStatusMatrix[cmd]:
+                    args = self.originalStatusMatrix[cmd][item]
+                    if 'a' in args and 'b' in args:
+                        part = response[args['a']:args['b']]
+                    else:
+                        part = response
+
+                    # translate the response value if we know how
+                    if 'translate' in args:
+                        status[item] = self._translate(
+                            args['translate'], part)
+                    else:
+                        status[item] = part
+
+
+        # build summary
+        if 'record' in status and status['record'] == 'on':
+            status['summary'] = 'recording'
+        elif 'power' in status and status['power'] == 'on':
+            status['summary'] = 'on'
+        elif 'power' in status and status['power'] == 'sleeping':
+            status['summary'] = 'sleeping'
+
+        #logging.info('GoProHero.status() - result {}'.format(status))
+        return status
+
     def status(self):
         timeout = 2.0
 
@@ -584,7 +636,7 @@ class GoProHero4:
 
         r = http.request('GET', commandUrl)
         if (r.status == 200):
-            if(r.data != '{}\n'):
+            if(r.data != '{}\n'): #this is an empty response (means success)
                 print r.data
         else:
             print commandUrl + " didn't work"

@@ -25,7 +25,10 @@ camera = GoProHero4()
 
 # get status or send command
 if args.param == 'status':
-    status = camera.status()
-    print status["state"]
+    status = camera.originalStatus()
+    try:
+        print status[args.value]
+    except:
+        print status
 else:
     camera.command(args.param, args.value)
