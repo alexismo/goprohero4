@@ -1,0 +1,31 @@
+#!/usr/bin/python
+
+import json
+import argparse
+import sys
+sys.path.insert(0,'..')
+from goprohero4 import GoProHero4
+#from wireless import Wireless
+
+# get command line arguments
+parser = argparse.ArgumentParser(description=(
+    'A command line interface for passing commands to one or more GoPros.'))
+# parser.add_argument(
+#     'ssid', nargs='+', help='ssid of the gopro to control')
+# parser.add_argument(
+#     'password', help='the password for the gopro(s)')
+parser.add_argument(
+    'param', help='the parameter to be changed or "status" for status')
+parser.add_argument(
+    'value', help='the value to set the parameter to')
+args = parser.parse_args()
+
+# set up camera and network adapters
+camera = GoProHero4()
+
+# get status or send command
+if args.param == 'status':
+    status = camera.status()
+    print status["state"]
+else:
+    camera.command(args.param, args.value)

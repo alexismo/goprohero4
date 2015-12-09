@@ -1,11 +1,10 @@
 from goprohero4 import GoProHero4
+from wireless import Wireless
+
+
 
 camera = GoProHero4()
-
-status = camera.status()
-
 #print status
-camera.command('mode', 'video')
-camera.command('fps', 2)
+camera.command('deleteall', '')
 
 #print status

@@ -98,7 +98,10 @@ class GoProHero4:
             for key in options:
                 if (value == options[key]):
                     value = key
-        #if we passed an int, run it as is
+        #if we passed an int or None, run it as is
+        # (deleteall uses None)
+
+        print value
 
         #print options
         return 'http://{}/gp/gpControl/{}{}'.format(
@@ -422,15 +425,13 @@ class GoProHero4:
         'fps':{
         'cmd' : 'setting/3/',
         'translate' : {
-            0 : '240fps',
-            1 : '120fps',
-            2 : '60fps',
-            3 : 'test3',
-            5 : 'test4',
-            6 : '30fps',
-            7 : 'test5',
-            8 : 'test6',
-            10 : 'test7'}
+            0 : 'setting1',
+            1 : 'setting2',
+            2 : 'setting3',
+            3 : 'setting4',
+            4 : 'setting5',
+            5 : 'setting6',
+            6 : 'setting7'}
         },
         'videoresolution':{
         'cmd' : 'setting/2/',
@@ -447,6 +448,18 @@ class GoProHero4:
             11 : '720pSuperview',
             12 : '720p',
             13 : 'WVGA'}
+        },
+        'shutter':{
+        'cmd' : 'command/shutter?p=',
+        'translate' : {
+            1:'on',
+            0:'off'}
+        },
+        'deleteall':{ # run as command('deleteall', '').
+        #takes an empty string as a parameter
+        'cmd' : 'command/storage/delete/all',
+        'translate' : {
+            '':'1'}
         }
     }
 
@@ -571,11 +584,10 @@ class GoProHero4:
 
         r = http.request('GET', commandUrl)
         if (r.status == 200):
-            print "ran "+commandUrl
-            if(r.data != {}):
+            if(r.data != '{}\n'):
                 print r.data
         else:
-            print "dammit"
+            print commandUrl + " didn't work"
 
         # func_str = 'GoProHero.command({}, {})'.format(command, value)
         #
