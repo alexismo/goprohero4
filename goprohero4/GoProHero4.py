@@ -93,9 +93,12 @@ class GoProHero4:
         commandURI = self.commandMatrix[command]
         options = self.commandMatrix[command]['translate']
         cmd = self.commandMatrix[command]['cmd']
-        for key in options:
-            if (value == options[key]):
-                value = key
+
+        if( type(value) is not int):
+            for key in options:
+                if (value == options[key]):
+                    value = key
+        #if we passed an int, run it as is
 
         #print options
         return 'http://{}/gp/gpControl/{}{}'.format(
@@ -401,6 +404,49 @@ class GoProHero4:
             0 : 'video',
             1 : 'photo',
             2 : 'multishot'}
+        },
+        'protune':{
+        'cmd' : 'setting/10/',
+        'translate':{
+            0 : 'off',
+            1 : 'on'}
+        },
+        'photoresolution':{
+        'cmd' : 'setting/17/',
+        'translate':{
+            0 : '12MPWide',
+            1 : '7MPWide',
+            2 : '7MPMed',
+            3 : '5MPWide'}
+        },
+        'fps':{
+        'cmd' : 'setting/3/',
+        'translate' : {
+            0 : '240fps',
+            1 : '120fps',
+            2 : '60fps',
+            3 : 'test3',
+            5 : 'test4',
+            6 : '30fps',
+            7 : 'test5',
+            8 : 'test6',
+            10 : 'test7'}
+        },
+        'videoresolution':{
+        'cmd' : 'setting/2/',
+        'translate' : {
+            1 : '4K',
+            2 : '4KSuperview',
+            4 : '2.7K',
+            5 : '2.7KSuperview',
+            6 : '2.7K4:3',
+            7 : '1440p',
+            8 : '1080pSuperview',
+            9 : '1080p',
+            10 : '960p',
+            11 : '720pSuperview',
+            12 : '720p',
+            13 : 'WVGA'}
         }
     }
 
@@ -525,7 +571,9 @@ class GoProHero4:
 
         r = http.request('GET', commandUrl)
         if (r.status == 200):
-            print "super cool. we got this"
+            print "ran "+commandUrl
+            if(r.data != {}):
+                print r.data
         else:
             print "dammit"
 
